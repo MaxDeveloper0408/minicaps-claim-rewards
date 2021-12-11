@@ -5,6 +5,7 @@ import React, { useState, useEffect } from "react";
 import ConnectedWeb3Provider from "../../wallet/ConnectedWeb3Provider";
 import useContract from "../../hooks/useContractOperations";
 import Web3 from "web3";
+import BigNumber from 'big-number';
 
 function Dashboard(props) {
 
@@ -32,16 +33,29 @@ function Dashboard(props) {
   );
 
 
-  const CoinGeckoAPIForBNB = 'https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd';
+  const CoinGeckoAPIForBNB = 'https://api.coingecko.com/api/v3/simple/price?ids=binancecoin&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true';
   const CoinGeckoAPIForMNX = 'https://api.coingecko.com/api/v3/simple/price?ids=minix&vs_currencies=usd&include_24hr_change=true&include_24hr_vol=true';
 
   const getBNBPrice = async () => {
     try {
-        const result = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BNBUSDT', {
+        const result = await fetch(CoinGeckoAPIForBNB, {
             method: 'GET',
         });
         const data = await result.json();
-        return data.price;
+        return data.binancecoin.usd;
+    } catch (e) {
+        return 0;
+    }
+    return 0;
+  }
+
+  const getBNBChange = async () => {
+    try {
+        const result = await fetch(CoinGeckoAPIForBNB, {
+            method: 'GET',
+        });
+        const data = await result.json();
+        return parseFloat(data.binancecoin.usd_24h_change).toFixed(3);
     } catch (e) {
         return 0;
     }
@@ -66,10 +80,13 @@ function Dashboard(props) {
     const bnbpriceFrom = await getBNBPrice();
     setBnbPrice(bnbpriceFrom);
 
+    const bnbchangeFrom = await getBNBChange();
+    setBnbChange(bnbchangeFrom);
+
     const mnxpriceFrom = await getMNXPrice();
     setMnxPrice(mnxpriceFrom);
 
-    console.log(mnxPrice);
+    console.log(mnxPrice + ":" + bnbPrice);
 
     const isWeb3 = await isWeb3Available();
 
@@ -101,8 +118,9 @@ function Dashboard(props) {
   const [mnxBalance, setMnxBalance] = React.useState(0);
   const [rewardAmount, setRewardAmount] = React.useState(0);
   const [trewardAmount, setTRewardAmount] = React.useState(0);
-  const [bnbPrice, setBnbPrice] = React.useState(0);
-  const [mnxPrice, setMnxPrice] = React.useState(0);
+  const [bnbPrice, setBnbPrice] = React.useState(0.000);
+  const [bnbChange, setBnbChange] = React.useState(0.000);
+  const [mnxPrice, setMnxPrice] = React.useState(0.000);
 
   
   
@@ -140,28 +158,28 @@ function Dashboard(props) {
             <div className="tile">
               <h2 className="mb-2">{mnxBalance} MNX</h2>
               <p className="text-secondary mb-3">Your balance</p>
-              <p className="mb-0 text-success">$0.00</p>
+              <p className="mb-0 text-success">${ parseFloat(mnxBalance * mnxPrice).toFixed(3) }</p>
             </div>
           </div>
           <div className="col">
             <div className="tile">
-            <h2 className="mb-2">$ {bnbPrice}</h2>
+            <h2 className="mb-2">$ {parseFloat(bnbPrice).toFixed(3)}</h2>
               <p className="text-secondary mb-3">BNB Price</p>
-              {/* <p className="mb-0 text-success">4.63%</p> */}
+              <p className="mb-0 text-success">{bnbChange}%</p>
             </div>
           </div>
           <div className="col">
             <div className="tile">
               <h2 className="mb-2">{rewardAmount} MNX</h2>
               <p className="text-secondary mb-3">Total MNX Rewards</p>
-              <p className="mb-0 text-success">$0.00</p>
+              <p className="mb-0 text-success">${parseFloat(rewardAmount * mnxPrice).toFixed(3)}</p>
             </div>
           </div>
           <div className="col">
             <div className="tile">
               <h2 className="mb-2">{trewardAmount} MNX</h2>
               <p className="text-secondary mb-3">Total Minicaps Tokens Rewards </p>
-              <p className="mb-0 text-success">$0.00</p>
+              <p className="mb-0 text-success">${parseFloat(trewardAmount * mnxPrice).toFixed(3)}</p>
             </div>
           </div>
        </div>
